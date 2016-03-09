@@ -52,7 +52,7 @@ log()
 {
     # Un-comment the following if you would like to enable logging to a service
     #curl -X POST -H "content-type:text/plain" --data-binary "${HOSTNAME} - $1" https://logs-01.loggly.com/inputs/<key>/tag/es-extension,${HOSTNAME}
-    echo "$1"
+    echo \[$(date +%d%m%Y-%H:%M:%S)\] "[vm-disk-utils]" "$1"
 }
 
 if [ "${UID}" -ne 0 ];
@@ -250,7 +250,7 @@ scan_partition_format()
 
 create_striped_volume()
 {
-    DISKS=(${@})
+  DISKS=(${@})
 
   if [ "${#DISKS[@]}" -eq 0 ];
   then
@@ -258,17 +258,17 @@ create_striped_volume()
       return
   fi
 
-  echo "Disks are ${DISKS[@]}"
+  log "Disks are ${DISKS[@]}"
 
   declare -a PARTITIONS
 
   for DISK in "${DISKS[@]}";
   do
-      echo "Working on ${DISK}"
+      log "Working on ${DISK}"
       is_partitioned ${DISK}
       if [ ${?} -ne 0 ];
       then
-          echo "${DISK} is not partitioned, partitioning"
+          log "${DISK} is not partitioned, partitioning"
           do_partition ${DISK} fd
       fi
 
@@ -276,12 +276,13 @@ create_striped_volume()
       PARTITIONS+=("${PARTITION}")
   done
 
-    MDDEVICE=$(get_next_md_device)    
-    
-  mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
+  MDDEVICE=$(get_next_md_device)
+  log "Next MD Device: ${MDDEVICE}"
+
+  mdadm --create ${MDDEVICE} --level=0 --raid-devices=${#PARTITIONS[@]} ${PARTITIONS[*]}
 
   MOUNTPOINT=$(get_next_mountpoint)
-  echo "Next mount point appears to be ${MOUNTPOINT}"
+  log "Next mount point appears to be ${MOUNTPOINT}"
   [ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
 
   #Make a file system on the new device
@@ -289,6 +290,7 @@ create_striped_volume()
   PARTITIONSNUM=${#PARTITIONS[@]}
   STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
 
+  log "Creating EXT4 partition on ${MDDEVICE}"
   mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH},nodiscard "${MDDEVICE}"
 
   read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
@@ -301,6 +303,7 @@ create_striped_volume()
 check_mdadm() {
     dpkg -s mdadm >/dev/null 2>&1
     if [ ${?} -ne 0 ]; then
+        log "MDAdm not found - Installing"
         apt-get -y update
         DEBIAN_FRONTEND=noninteractive apt-get -y install mdadm --fix-missing
     fi
