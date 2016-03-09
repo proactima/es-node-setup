@@ -38,6 +38,7 @@ help()
     echo "This script installs Elasticsearch cluster on Ubuntu"
     echo "Parameters:"
     echo "-n elasticsearch cluster name"
+    echo "-p node prefix"
     echo "-v elasticsearch version 1.5.0"
     echo "-h view this help content"
 }
@@ -84,6 +85,7 @@ INSTALL_PLUGINS=0
 CLIENT_ONLY_NODE=0
 DATA_NODE=0
 MASTER_ONLY_NODE=0
+NODE_PREFIX=""
 
 CLUSTER_USES_DEDICATED_MASTERS=0
 DATANODE_COUNT=3
@@ -97,7 +99,7 @@ USER_KIBANA4_PWD="changeME"
 USER_KIBANA4_SERVER_PWD="changeME"
 
 #Loop through options passed
-while getopts :n:v:h optname; do
+while getopts :n:p:v:h optname; do
   log "Option $optname set"
   case $optname in
     n) #set cluster name
@@ -105,6 +107,9 @@ while getopts :n:v:h optname; do
       ;;
     v) #elasticsearch version number
       ES_VERSION=${OPTARG}
+      ;;
+    p) #node prefix
+      NODE_PREFIX=${OPTARG}
       ;;
     h) #show help
       help
@@ -125,7 +130,7 @@ done
 MINIMUM_MASTER_NODES=$(((DATANODE_COUNT/2)+1))
 UNICAST_HOSTS='['
 for i in $(seq 0 $((DATANODE_COUNT-1))); do
-    UNICAST_HOSTS="$UNICAST_HOSTS\"esdatavm$i:9300\","
+    UNICAST_HOSTS="$UNICAST_HOSTS\"$NODE_PREFIX$i:9300\","
 done
 UNICAST_HOSTS="${UNICAST_HOSTS%?}]"
 
