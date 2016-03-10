@@ -1,4 +1,4 @@
-param([bool]$allowReboot = $false, [int]$rebootWaitTime = 0)
+param([switch]$AllowReboot, [int]$RebootWaitTime = 0)
 
 Function UpdateRegistryPath($path)
 {
@@ -73,10 +73,10 @@ $rebootRequired = (UpdateRegistryKey "HKLM:\SOFTWARE\Policies\Microsoft\Cryptogr
 
 if($rebootRequired)
 {
-  if($allowReboot)
+  if($AllowReboot)
   {
     write-output "Registry was updated, rebooting..."
-    shutdown /r /t $rebootWaitTime
+    shutdown /r /t $RebootWaitTime
   }
   else
   {
