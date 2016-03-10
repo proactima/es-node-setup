@@ -200,6 +200,10 @@ install_plugins()
     log "[install_plugins] Installing Plugin Marvel"
     sudo /usr/share/elasticsearch/bin/plugin install license
     sudo /usr/share/elasticsearch/bin/plugin install marvel-agent
+    sudo /usr/share/elasticsearch/bin/plugin install cloud-azure
+    #sudo /usr/share/elasticsearch/bin/plugin install mobz/elasticsearch-head
+    #sudo /usr/share/elasticsearch/bin/plugin install royrusso/elasticsearch-HQ
+    sudo /usr/share/elasticsearch/bin/plugin install lmenezes/elasticsearch-kopf/2.0
 
     echo "marvel.agent.enabled: true" >> /etc/elasticsearch/elasticsearch.yml
 }
@@ -266,15 +270,19 @@ configure_os_properties()
     ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
     log "[configure_os_properties] Configure elasticsearch heap size - $ES_HEAP"
     echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
+    echo "MAX_OPEN_FILES=131070" >> /etc/default/elasticsearch
+    echo "MAX_LOCKED_MEMORY=unlimited" >> /etc/default/elasticsearch
 
     # Verify this is necessary on azure
     # ML: 80% certain i verified this but will do so again
-    echo "elasticsearch    -    nofile    65536" >> /etc/security/limits.conf
-    echo "elasticsearch     -    memlock   unlimited" >> /etc/security/limits.conf
-    echo "session    required    pam_limits.so" >> /etc/pam.d/su
-    echo "session    required    pam_limits.so" >> /etc/pam.d/common-session
-    echo "session    required    pam_limits.so" >> /etc/pam.d/common-session-noninteractive
-    echo "session    required    pam_limits.so" >> /etc/pam.d/sudo
+    #echo "root             -    memlock   unlimited" >> /etc/security/limits.conf
+    #echo "elasticsearch    -    nofile    65536" >> /etc/security/limits.conf
+    #echo "elasticsearch    soft    memlock   unlimited" >> /etc/security/limits.conf
+    #echo "elasticsearch    hard    memlock   unlimited" >> /etc/security/limits.conf
+    #echo "session    required    pam_limits.so" >> /etc/pam.d/su
+    #echo "session    required    pam_limits.so" >> /etc/pam.d/common-session
+    #echo "session    required    pam_limits.so" >> /etc/pam.d/common-session-noninteractive
+    #echo "session    required    pam_limits.so" >> /etc/pam.d/sudo
     log "[configure_os_properties] configured operating system level configuration"
 
 }
